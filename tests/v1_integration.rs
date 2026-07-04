@@ -14,7 +14,9 @@ use rxrust::{
   scheduler::{Duration, LocalScheduler, SleepProvider},
 };
 
-fn approx_eq(expected: f64, actual: f64) -> bool { (expected - actual).abs() <= 1e-9 }
+fn approx_eq(expected: f64, actual: f64) -> bool {
+  (expected - actual).abs() <= 1e-9
+}
 
 #[rxrust_macro::test]
 fn test_basic_chain_integration() {
@@ -62,6 +64,27 @@ fn test_switch_map_box_it() {
   Local::empty()
     .switch_map(|_| Local::empty())
     .box_it();
+}
+
+#[rxrust_macro::test]
+fn test_catch_error() {
+  let result = Rc::new(RefCell::new(Vec::new()));
+  let result_clone = result.clone();
+
+  Shared::throw_err("error str")
+    .catch_error(|error| Shared::of(format!("caught {error}")))
+    .subscribe(move |v| result_clone.borrow_mut().push(v));
+
+  assert_eq!(*result.borrow(), vec![String::from("caught error str")]);
+
+  let result = Rc::new(RefCell::new(Vec::new()));
+  let result_clone = result.clone();
+
+  Local::throw_err("error str")
+    .catch_error(|error| Local::of(format!("caught {error}")))
+    .subscribe(move |v| result_clone.borrow_mut().push(v));
+
+  assert_eq!(*result.borrow(), vec![String::from("caught error str")]);
 }
 
 #[rxrust_macro::test]
