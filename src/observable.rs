@@ -1220,12 +1220,11 @@ pub trait Observable: Context {
   ///   .on_error(|_e| {})
   ///   .subscribe(|_| {});
   /// ```
-  fn retry<P>(self, policy: P) -> Self::With<Retry<Self::Inner, P, Self::Scheduler>>
+  fn retry<P>(self, policy: P) -> Self::With<Retry<Self::Inner, P>>
   where
     P: RetryPolicy<Self::Err>,
   {
-    let scheduler = self.scheduler().clone();
-    self.transform(|source| Retry { source, policy, scheduler })
+    self.transform(|source| Retry { source, policy })
   }
 
   /// Throttle emissions by ignoring values during a window

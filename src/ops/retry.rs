@@ -256,10 +256,9 @@ impl<Err> RetryPolicy<Err> for RetryConfig {
 
 /// The Retry operator struct.
 #[derive(Clone)]
-pub struct Retry<S, P, Sch> {
+pub struct Retry<S, P> {
   pub source: S,
   pub policy: P,
-  pub scheduler: Sch,
 }
 
 /// Observer for retry operator.
@@ -283,7 +282,7 @@ where
   subscribe_fn: fn(Self),
 }
 
-impl<S, P, Sch> ObservableType for Retry<S, P, Sch>
+impl<S, P> ObservableType for Retry<S, P>
 where
   S: ObservableType,
 {
@@ -306,7 +305,7 @@ where
   type Err = S::Err;
 }
 
-impl<S, P, Sch, Ctx> CoreObservable<Ctx> for Retry<S, P, Sch>
+impl<S, P, Ctx> CoreObservable<Ctx> for Retry<S, P>
 where
   Ctx: Context,
   S: CoreObservable<Ctx::With<RetryObserver<S, P, Ctx>>> + Clone,
