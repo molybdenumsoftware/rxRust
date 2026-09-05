@@ -39,6 +39,7 @@ pub use trivial::*;
 
 // Internal imports (avoid circular dependency with prelude)
 use crate::context::Context;
+use crate::ops::CatchError;
 use crate::ops::{
   average::{Average, Averageable},
   buffer::Buffer, // Restored
@@ -479,7 +480,9 @@ pub trait Observable: Context {
   /// let observable = Local::from_iter([1, 2, 3]).first();
   /// // Emits: 1
   /// ```
-  fn first(self) -> Self::With<Take<Self::Inner>> { self.take(1) }
+  fn first(self) -> Self::With<Take<Self::Inner>> {
+    self.take(1)
+  }
 
   /// Emit the first value from the source observable, or a default if empty
   ///
@@ -572,7 +575,9 @@ pub trait Observable: Context {
   /// let observable = Local::from_iter([1, 2, 3, 4, 5]).last();
   /// // Emits: 5
   /// ```
-  fn last(self) -> Self::With<Last<Self::Inner>> { self.transform(|source| Last { source }) }
+  fn last(self) -> Self::With<Last<Self::Inner>> {
+    self.transform(|source| Last { source })
+  }
 
   /// Emit the last value from the source observable, or a default if empty
   ///
@@ -912,7 +917,9 @@ pub trait Observable: Context {
   ///
   /// This is equivalent to `merge_all(1)` - waits for each inner observable to
   /// complete before subscribing to the next one.
-  fn concat_all(self) -> Self::With<MergeAll<Self::Inner>> { self.merge_all(1) }
+  fn concat_all(self) -> Self::With<MergeAll<Self::Inner>> {
+    self.merge_all(1)
+  }
 
   /// Split the source observable into multiple GroupedObservables
   ///
@@ -1490,6 +1497,13 @@ pub trait Observable: Context {
     self.transform(|source| DefaultIfEmpty::new(source, default_value))
   }
 
+  fn catch_error<F, SubstObservable>(self, func: F) -> Self::With<CatchError<Self::Inner, F>>
+  where
+    F: FnOnce(Self::Err) -> SubstObservable,
+  {
+    self.transform(|source| CatchError { source, func })
+  }
+
   /// Collect all emitted items into a collection
   ///
   /// The `collect` operator accumulates all items emitted by the source
@@ -1867,7 +1881,9 @@ pub trait Observable: Context {
   /// // Later, disconnect to stop multicasting
   /// connection.unsubscribe();
   /// ```
-  fn publish<'a>(self) -> ConnectableObservableCtx<'a, Self> { self.multicast(Subject::default()) }
+  fn publish<'a>(self) -> ConnectableObservableCtx<'a, Self> {
+    self.multicast(Subject::default())
+  }
 
   /// Convert this observable into a ConnectableObservable for mutable reference
   /// broadcasting

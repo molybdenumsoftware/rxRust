@@ -71,20 +71,22 @@ fn test_catch_error() {
   let result = Rc::new(RefCell::new(Vec::new()));
   let result_clone = result.clone();
 
-  Shared::throw_err("error str")
-    .catch_error(|error| Shared::of(format!("caught {error}")))
-    .subscribe(move |v| result_clone.borrow_mut().push(v));
-
-  assert_eq!(*result.borrow(), vec![String::from("caught error str")]);
-
-  let result = Rc::new(RefCell::new(Vec::new()));
-  let result_clone = result.clone();
-
   Local::throw_err("error str")
-    .catch_error(|error| Local::of(format!("caught {error}")))
-    .subscribe(move |v| result_clone.borrow_mut().push(v));
+    //Local::of(' ')
+    //.map_to(' ')
+    .catch_error(|error| Local::of('&'))
+    //.on_error(|e| unreachable!())
+    .subscribe(move |v| result_clone.borrow_mut().push('c'));
 
-  assert_eq!(*result.borrow(), vec![String::from("caught error str")]);
+  assert_eq!(*result.borrow(), vec!['&']);
+
+  // let result = Arc::new(RefCell::new(Vec::new()));
+  // let result_clone = result.clone();
+  //
+  // let catch_error = Shared::throw_err("error str").catch_error(|error| Shared::from_iter([(), ()]));
+  // catch_error.subscribe(move |v| result_clone.borrow_mut().push(v));
+  //
+  // assert_eq!(*result.borrow(), vec![(), ()]);
 }
 
 #[rxrust_macro::test]

@@ -82,7 +82,9 @@ where
     }
   }
 
-  fn is_closed(&self) -> bool { false }
+  fn is_closed(&self) -> bool {
+    false
+  }
 }
 
 #[doc(hidden)]

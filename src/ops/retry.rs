@@ -168,7 +168,9 @@ pub trait RetryPolicy<Err>: Clone {
   /// 0 whenever the source observable emits a `next` value. This is useful
   /// for "connection" scenarios where a successful value means the connection
   /// is healthy.
-  fn reset_on_success(&self) -> bool { false }
+  fn reset_on_success(&self) -> bool {
+    false
+  }
 }
 
 impl<Err> RetryPolicy<Err> for usize {
@@ -205,7 +207,9 @@ pub struct RetryConfig {
 
 impl RetryConfig {
   /// Creates a new default configuration (no retries, no delay).
-  pub fn new() -> Self { Self { count: None, delay: None, reset_on_success: false } }
+  pub fn new() -> Self {
+    Self { count: None, delay: None, reset_on_success: false }
+  }
 
   /// Sets the maximum number of retry attempts.
   ///
@@ -238,7 +242,9 @@ impl RetryConfig {
 }
 
 impl Default for RetryConfig {
-  fn default() -> Self { Self::new() }
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl<Err> RetryPolicy<Err> for RetryConfig {
@@ -251,7 +257,9 @@ impl<Err> RetryPolicy<Err> for RetryConfig {
     Some(self.delay.unwrap_or(Duration::ZERO))
   }
 
-  fn reset_on_success(&self) -> bool { self.reset_on_success }
+  fn reset_on_success(&self) -> bool {
+    self.reset_on_success
+  }
 }
 
 /// The Retry operator struct.
@@ -363,9 +371,13 @@ where
     }
   }
 
-  fn complete(self) { self.observer.complete(); }
+  fn complete(self) {
+    self.observer.complete();
+  }
 
-  fn is_closed(&self) -> bool { self.observer.is_closed() }
+  fn is_closed(&self) -> bool {
+    self.observer.is_closed()
+  }
 }
 
 impl<S, P, Ctx> RetryObserver<S, P, Ctx>

@@ -91,15 +91,19 @@ where
   }
 }
 
-type MergeObserverCtx<C> = <C as Context>::With<
-  MergeObserver<<C as Context>::RcMut<MergeObserverInner<<C as Context>::Inner>>>,
->;
-
 impl<S1, S2, C> CoreObservable<C> for Merge<S1, S2>
 where
   C: Context,
-  S1: CoreObservable<MergeObserverCtx<C>>,
-  S2: CoreObservable<MergeObserverCtx<C>>,
+  S1: CoreObservable<
+    <C as Context>::With<
+      MergeObserver<<C as Context>::RcMut<MergeObserverInner<<C as Context>::Inner>>>,
+    >,
+  >,
+  S2: CoreObservable<
+    <C as Context>::With<
+      MergeObserver<<C as Context>::RcMut<MergeObserverInner<<C as Context>::Inner>>>,
+    >,
+  >,
 {
   type Unsub = TupleSubscription<S1::Unsub, S2::Unsub>;
 
