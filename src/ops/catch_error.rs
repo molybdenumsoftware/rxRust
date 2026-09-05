@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  CoreObservable, IntoBoxedSubscription, Observable, Subscription,
+  BoxedSubscription, CoreObservable, IntoBoxedSubscription, Observable, Subscription,
   context::{Context, RcDerefMut},
   observable::ObservableType,
   observer::Observer,
@@ -27,24 +27,31 @@ pub struct CatchError<S, F> {
   pub func: F,
 }
 
-pub struct CatchErrorOrigObserver<P, O, F, SO> {
+pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
   subscription: P,
   observer: O,
   func: F,
   subst_observable: PhantomData<SO>,
+  ctx: PhantomData<C>,
+  next_observer: PhantomData<NO>,
 }
 
-impl<NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
+impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
   for CatchErrorOrigObserver<
-    NextObserver::RcMut<Option<NextObserver::BoxedSubscription>>,
-    NextObserver,
+    Ctx::RcMut<Option<BoxedSubscription>>,
+    Ctx::With<NextObserver>,
     F,
     SubstObservable,
+    Ctx,
+    NextObserver,
   >
 where
-  NextObserver: Context + Observer<Item, SubstObservable::Err>,
-  F: FnOnce(OrigErr) -> NextObserver::With<SubstObservable>,
-  SubstObservable: CoreObservable<NextObserver>,
+  Ctx: Context,
+  NextObserver: Observer<Item, SubstObservable::Err>,
+  F: FnOnce(OrigErr) -> Ctx::With<SubstObservable>,
+  SubstObservable: CoreObservable<Ctx::With<NextObserver>, Unsub: 'static>,
+  // `CoreObservable<NextObserver::With<SubstObservable>::With<_>>` is not implemented for `SubstObservable`
+  // SubstObservable: NextObserver::With<CoreObservable<NextObserver::With<NextObserver>>>,
   // NextObserver: Observer<_, _>,
   // P: RcDerefMut<Target = Option<SubstObservable::BoxedSubscription>>,
   // NextObserver: Observer<Item, SubstObservable::Err>,
@@ -57,7 +64,7 @@ where
   //SubstObservable: Context<Inner: ObservableType<Err = SubstErr> + 'static>,
 {
   fn next(&mut self, value: Item) {
-    self.observer.next(value);
+    self.observer.inner_mut().next(value);
   }
 
   fn error(self, err: OrigErr) {
@@ -65,21 +72,26 @@ where
     if let Some(sub) = subscription.rc_deref_mut().take() {
       sub.unsubscribe();
     }
-    let subst_observable = func(err);
+    let mut subst_observable = func(err);
+    // let subst_subscription = subst_observable.transform(|inner| {
+    //   let subst_subscription = inner.subscribe(observer);
+    //   subst_subscription
+    // });
     // let subst_observer = CatchErrorSubstObserver { observer };
-    *subscription.rc_deref_mut() = Some(
-      subst_observable
-        .subscribe_with(observer)
-        .into_boxed(),
-    );
+    let subst_subscription = subst_observable.into_inner().subscribe(observer);
+    // let boxed = subst_subscription.in
+    // let subst_subscription = subst_observable.subscribe_with(observer);
+    // let boxed = Ctx::BoxedSubscription::into_boxed(subst_subscription);
+    let boxed = subst_subscription.into_boxed();
+    *subscription.rc_deref_mut() = Some(boxed);
   }
 
   fn complete(self) {
-    self.observer.complete();
+    self.observer.into_inner().complete();
   }
 
   fn is_closed(&self) -> bool {
-    self.observer.is_closed()
+    self.observer.inner().is_closed()
   }
 }
 
@@ -131,6 +143,8 @@ where
         Ctx::Inner,
         F,
         SubstObservable,
+        Ctx,
+        Ctx,
       >,
     >,
   >,
@@ -150,6 +164,8 @@ where
       observer,
       func,
       subst_observable: PhantomData,
+      ctx: PhantomData,
+      next_observer: PhantomData,
     });
     *subscription.rc_deref_mut() = Some(source.subscribe(wrapped).into_boxed());
     subscription
