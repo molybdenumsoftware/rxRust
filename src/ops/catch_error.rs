@@ -67,7 +67,11 @@ where
     }
     let subst_observable = func(err);
     // let subst_observer = CatchErrorSubstObserver { observer };
-    *subscription.rc_deref_mut() = Some(subst_observable.subscribe(observer).into_boxed());
+    *subscription.rc_deref_mut() = Some(
+      subst_observable
+        .subscribe_with(observer)
+        .into_boxed(),
+    );
   }
 
   fn complete(self) {
@@ -121,7 +125,14 @@ impl<S, F, SubstObservable, SubstErr, Ctx> CoreObservable<Ctx> for CatchError<S,
 where
   Ctx: Context + for<'a> Observer<SubstObservable::Item<'a>, SubstErr>,
   S: CoreObservable<
-    Ctx::With<CatchErrorOrigObserver<Ctx::RcMut<Option<Ctx::BoxedSubscription>>, Ctx::Inner, F>>,
+    Ctx::With<
+      CatchErrorOrigObserver<
+        Ctx::RcMut<Option<Ctx::BoxedSubscription>>,
+        Ctx::Inner,
+        F,
+        SubstObservable,
+      >,
+    >,
   >,
   S::Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>,
   F: FnOnce(S::Err) -> SubstObservable,
@@ -138,6 +149,7 @@ where
       subscription: subscription_clone,
       observer,
       func,
+      subst_observable: PhantomData,
     });
     *subscription.rc_deref_mut() = Some(source.subscribe(wrapped).into_boxed());
     subscription
