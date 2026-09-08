@@ -39,7 +39,7 @@ pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
 impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
   for CatchErrorOrigObserver<
     Ctx::RcMut<Option<BoxedSubscription>>,
-    Ctx::With<NextObserver>,
+    NextObserver,
     F,
     SubstObservable,
     Ctx,
@@ -64,7 +64,7 @@ where
   //SubstObservable: Context<Inner: ObservableType<Err = SubstErr> + 'static>,
 {
   fn next(&mut self, value: Item) {
-    self.observer.inner_mut().next(value);
+    self.observer.next(value);
   }
 
   fn error(self, err: OrigErr) {
@@ -72,13 +72,15 @@ where
     if let Some(sub) = subscription.rc_deref_mut().take() {
       sub.unsubscribe();
     }
-    let mut subst_observable = func(err);
+    let subst_observable = func(err);
     // let subst_subscription = subst_observable.transform(|inner| {
     //   let subst_subscription = inner.subscribe(observer);
     //   subst_subscription
     // });
     // let subst_observer = CatchErrorSubstObserver { observer };
-    let subst_subscription = subst_observable.into_inner().subscribe(observer);
+    let subst_subscription = subst_observable
+      .into_inner()
+      .subscribe(Ctx::lift(observer));
     // let boxed = subst_subscription.in
     // let subst_subscription = subst_observable.subscribe_with(observer);
     // let boxed = Ctx::BoxedSubscription::into_boxed(subst_subscription);
@@ -87,11 +89,11 @@ where
   }
 
   fn complete(self) {
-    self.observer.into_inner().complete();
+    self.observer.complete();
   }
 
   fn is_closed(&self) -> bool {
-    self.observer.inner().is_closed()
+    self.observer.is_closed()
   }
 }
 
