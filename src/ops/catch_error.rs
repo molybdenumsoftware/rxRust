@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  BoxedSubscription, CoreObservable, IntoBoxedSubscription, Observable, Subscription,
+  BoxedSubscription, CoreObservable, IntoBoxedSubscription, Subscription,
   context::{Context, RcDerefMut},
   observable::ObservableType,
   observer::Observer,
@@ -38,7 +38,7 @@ pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
 
 impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
   for CatchErrorOrigObserver<
-    Ctx::RcMut<Option<BoxedSubscription>>,
+    Ctx::RcMut<Option<Ctx::BoxedSubscription>>,
     NextObserver,
     F,
     SubstObservable,
@@ -49,7 +49,8 @@ where
   Ctx: Context,
   NextObserver: Observer<Item, SubstObservable::Err>,
   F: FnOnce(OrigErr) -> Ctx::With<SubstObservable>,
-  SubstObservable: CoreObservable<Ctx::With<NextObserver>, Unsub: 'static>,
+  SubstObservable:
+    CoreObservable<Ctx::With<NextObserver>, Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>>,
   // `CoreObservable<NextObserver::With<SubstObservable>::With<_>>` is not implemented for `SubstObservable`
   // SubstObservable: NextObserver::With<CoreObservable<NextObserver::With<NextObserver>>>,
   // NextObserver: Observer<_, _>,
@@ -84,8 +85,7 @@ where
     // let boxed = subst_subscription.in
     // let subst_subscription = subst_observable.subscribe_with(observer);
     // let boxed = Ctx::BoxedSubscription::into_boxed(subst_subscription);
-    let boxed = subst_subscription.into_boxed();
-    *subscription.rc_deref_mut() = Some(boxed);
+    *subscription.rc_deref_mut() = Some(subst_subscription.into_boxed());
   }
 
   fn complete(self) {
