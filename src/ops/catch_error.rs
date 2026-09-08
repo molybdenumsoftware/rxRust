@@ -35,7 +35,8 @@ pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
   ctx: PhantomData<C>,
   next_observer: PhantomData<NO>,
 }
-
+// the trait `Observer<(), &str>` is not implemented for `CatchErrorOrigObserver<FnMutObserver<_>, {closure@v1_integration.rs:77:18}, LocalCtx<..., ...>, ..., ...>`
+// the trait `Observer<(), &str>` is not implemented for `CatchErrorOrigObserver<MutRc<Option<BoxedSubscription>>, FnMutObserver<_>, {closure@...}, ..., ..., ...>`
 impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
   for CatchErrorOrigObserver<
     Ctx::RcMut<Option<Ctx::BoxedSubscription>>,
@@ -137,7 +138,7 @@ where
 
 impl<S, F, SubstObservable, SubstErr, Ctx> CoreObservable<Ctx> for CatchError<S, F>
 where
-  Ctx: Context + for<'a> Observer<SubstObservable::Item<'a>, SubstErr>,
+  Ctx: Context + for<'a> Observer<S::Item<'a>, SubstErr>,
   S: CoreObservable<
     Ctx::With<
       CatchErrorOrigObserver<
@@ -159,7 +160,7 @@ where
 
   fn subscribe(self, context: Ctx) -> Self::Unsub {
     let Self { source, func } = self;
-    let subscription = Ctx::RcMut::from(None);
+    let subscription: Ctx::RcMut<_> = Ctx::RcMut::from(None);
     let subscription_clone = subscription.clone();
     let wrapped = context.transform(move |observer| CatchErrorOrigObserver {
       subscription: subscription_clone,
