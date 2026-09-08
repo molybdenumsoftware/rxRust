@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-  BoxedSubscription, CoreObservable, IntoBoxedSubscription, Subscription,
+  CoreObservable, IntoBoxedSubscription, Subscription,
   context::{Context, RcDerefMut},
   observable::ObservableType,
   observer::Observer,
