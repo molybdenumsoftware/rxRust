@@ -138,7 +138,7 @@ where
 
 impl<S, F, SubstObservable, SubstErr, Ctx> CoreObservable<Ctx> for CatchError<S, F>
 where
-  Ctx: Context + for<'a> Observer<S::Item<'a>, SubstErr>,
+  Ctx: Context, // + for<'a> Observer<S::Item<'a>, SubstErr>,
   S: CoreObservable<
     Ctx::With<
       CatchErrorOrigObserver<
@@ -153,7 +153,7 @@ where
   >,
   S::Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>,
   F: FnOnce(S::Err) -> SubstObservable,
-  SubstObservable: Context<Inner: ObservableType<Err = SubstErr> + 'static> + ObservableType,
+  SubstObservable: Context<Inner: ObservableType<Err = SubstErr>> + 'static,
   Ctx::RcMut<Option<Ctx::BoxedSubscription>>: Subscription,
 {
   type Unsub = Ctx::RcMut<Option<Ctx::BoxedSubscription>>;
