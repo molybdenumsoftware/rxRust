@@ -45,7 +45,7 @@ impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigEr
     F,
     SubstObservable,
     Ctx,
-    NextObserver,
+    NextObserver, // TODO last we were reviewing this
   >
 where
   Ctx: Context,
@@ -149,7 +149,7 @@ where
         F,
         SubstObservable,
         Ctx,
-        Ctx,
+        Ctx, // TODO last we were reviewing this
       >,
     >,
   >,
