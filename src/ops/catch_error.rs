@@ -39,6 +39,7 @@ pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
 // the trait `Observer<(), &str>` is not implemented for `CatchErrorOrigObserver<MutRc<Option<BoxedSubscription>>, FnMutObserver<_>, {closure@...}, ..., ..., ...>`
 impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
   for CatchErrorOrigObserver<
+    // P,
     Ctx::RcMut<Option<Ctx::BoxedSubscription>>,
     NextObserver,
     F,
@@ -48,6 +49,7 @@ impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigEr
   >
 where
   Ctx: Context,
+  // P: RcDerefMut<Target = Option<Ctx::BoxedSubscription>>,
   NextObserver: Observer<Item, SubstObservable::Err>,
   F: FnOnce(OrigErr) -> Ctx::With<SubstObservable>,
   SubstObservable:
