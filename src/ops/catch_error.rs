@@ -35,6 +35,7 @@ pub struct CatchErrorOrigObserver<P, O, F, SO, C, NO> {
   ctx: PhantomData<C>,
   next_observer: PhantomData<NO>,
 }
+
 // the trait `Observer<(), &str>` is not implemented for `CatchErrorOrigObserver<FnMutObserver<_>, {closure@v1_integration.rs:77:18}, LocalCtx<..., ...>, ..., ...>`
 // the trait `Observer<(), &str>` is not implemented for `CatchErrorOrigObserver<MutRc<Option<BoxedSubscription>>, FnMutObserver<_>, {closure@...}, ..., ..., ...>`
 impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigErr>
@@ -50,10 +51,16 @@ impl<Ctx, NextObserver, Item, OrigErr, F, SubstObservable> Observer<Item, OrigEr
 where
   Ctx: Context,
   // P: RcDerefMut<Target = Option<Ctx::BoxedSubscription>>,
-  NextObserver: Observer<Item, SubstObservable::Err>,
-  F: FnOnce(OrigErr) -> Ctx::With<SubstObservable>,
-  SubstObservable:
-    CoreObservable<Ctx::With<NextObserver>, Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>>,
+  NextObserver: Observer<Item, <<SubstObservable as Context>::Inner as ObservableType>::Err>,
+  F: FnOnce(OrigErr) -> SubstObservable,
+  SubstObservable: Context<
+    Inner: CoreObservable<
+      Ctx::With<NextObserver>,
+      Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>,
+    >,
+  >,
+  // SubstObservable:
+  //   CoreObservable<Ctx::With<NextObserver>, Unsub: IntoBoxedSubscription<Ctx::BoxedSubscription>>,
   // `CoreObservable<NextObserver::With<SubstObservable>::With<_>>` is not implemented for `SubstObservable`
   // SubstObservable: NextObserver::With<CoreObservable<NextObserver::With<NextObserver>>>,
   // NextObserver: Observer<_, _>,

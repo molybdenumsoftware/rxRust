@@ -71,12 +71,12 @@ fn test_catch_error() {
   let result = Rc::new(RefCell::new(Vec::new()));
   let result_clone = result.clone();
 
-  Local::throw_err("error str")
-    //Local::of(' ')
-    //.map_to(' ')
-    .catch_error(|error| Local::of('&'))
-    //.on_error(|e| unreachable!())
-    .subscribe(move |v| result_clone.borrow_mut().push('c'));
+  let a = Local::throw_err("error str");
+  //Local::of(' ')
+  //.map_to(' ')
+  let b = a.catch_error(|error| Local::of('&'));
+  //.on_error(|e| unreachable!())
+  let c = b.subscribe(move |v| result_clone.borrow_mut().push('c'));
 
   assert_eq!(*result.borrow(), vec!['&']);
 
