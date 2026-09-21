@@ -531,3 +531,17 @@ fn test_combine_latest_reentrancy_path() {
 
   s1.next(2);
 }
+
+#[rxrust_macro::test]
+fn test_catch_error() {
+  let observable = Local::throw_err("some-error")
+    .map(|_| String::new())
+    .catch_error(|error| Local::from_iter([format!("error: {error}"), String::from("after")]));
+
+  let mut result = Vec::new();
+  observable.subscribe(|v| {
+    result.push(v);
+  });
+
+  assert_eq!(result, vec![String::from("error: some-error"), String::from("after")]);
+}
