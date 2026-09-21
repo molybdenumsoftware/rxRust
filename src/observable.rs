@@ -39,7 +39,6 @@ pub use trivial::*;
 
 // Internal imports (avoid circular dependency with prelude)
 use crate::context::Context;
-use crate::ops::CatchError;
 use crate::ops::{
   average::{Average, Averageable},
   buffer::Buffer, // Restored
@@ -92,6 +91,7 @@ use crate::ops::{
 };
 use crate::{
   observer::FnMutObserver,
+  ops::CatchError,
   scheduler::{Duration, Instant},
   subject::{Subject, SubjectPtr, SubjectPtrMutRef},
   subscription::Subscription,

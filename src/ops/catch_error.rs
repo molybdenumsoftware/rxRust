@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{
   CoreObservable, IntoBoxedSubscription, Subscription,
   context::{Context, RcDerefMut},
@@ -14,16 +12,16 @@ use crate::{
 /// ```
 /// use rxrust::prelude::*;
 ///
-///  let observable = Local::throw_err("some-error")
-///    .map(|_| String::new())
-///    .catch_error(|error| Local::from_iter([format!("error: {error}"), String::from("after")]));
+/// let observable = Local::throw_err("some-error")
+///   .map(|_| String::new())
+///   .catch_error(|error| Local::from_iter([format!("error: {error}"), String::from("after")]));
 ///
-///  let mut result = Vec::new();
-///  observable.subscribe(|v| {
-///    result.push(v);
-///  });
+/// let mut result = Vec::new();
+/// observable.subscribe(|v| {
+///   result.push(v);
+/// });
 ///
-///  assert_eq!(result, vec![String::from("error: some-error"), String::from("after")]);
+/// assert_eq!(result, vec![String::from("error: some-error"), String::from("after")]);
 /// ```
 pub struct CatchError<S, F> {
   pub source: S,
@@ -52,9 +50,7 @@ where
     >,
   >,
 {
-  fn next(&mut self, value: Item) {
-    self.observer.next(value);
-  }
+  fn next(&mut self, value: Item) { self.observer.next(value); }
 
   fn error(self, err: OrigErr) {
     let Self { subscription, observer, func, .. } = self;
@@ -71,13 +67,9 @@ where
     *subscription.rc_deref_mut() = Some(subst_subscription.into_boxed());
   }
 
-  fn complete(self) {
-    self.observer.complete();
-  }
+  fn complete(self) { self.observer.complete(); }
 
-  fn is_closed(&self) -> bool {
-    self.observer.is_closed()
-  }
+  fn is_closed(&self) -> bool { self.observer.is_closed() }
 }
 
 pub struct CatchErrorSubstObserver<O> {
@@ -88,21 +80,13 @@ impl<O, Item, Err> Observer<Item, Err> for CatchErrorSubstObserver<O>
 where
   O: Observer<Item, Err>,
 {
-  fn next(&mut self, value: Item) {
-    self.observer.next(value)
-  }
+  fn next(&mut self, value: Item) { self.observer.next(value) }
 
-  fn error(self, err: Err) {
-    self.observer.error(err)
-  }
+  fn error(self, err: Err) { self.observer.error(err) }
 
-  fn complete(self) {
-    self.observer.complete();
-  }
+  fn complete(self) { self.observer.complete(); }
 
-  fn is_closed(&self) -> bool {
-    self.observer.is_closed()
-  }
+  fn is_closed(&self) -> bool { self.observer.is_closed() }
 }
 
 impl<S, F, SubstObservable, SubstErr> ObservableType for CatchError<S, F>
